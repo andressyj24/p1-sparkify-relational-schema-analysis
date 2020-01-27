@@ -1,4 +1,4 @@
-# Document Process
+# Project 1: Data modeling with Postgres (Relational Database)
 
 ## Introduction
 
