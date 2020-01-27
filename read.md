@@ -1,44 +1,59 @@
-# Document Process
+# DROP TABLES
 
-## Introduction
+songplay_table_drop = "DROP table IF EXISTS songplays"
+user_table_drop = "DROP table IF EXISTS users"
+song_table_drop = "DROP table IF EXISTS songs"
+artist_table_drop = "DROP table IF EXISTS artists"
+time_table_drop = "DROP table IF EXISTS time"
 
-A startup called Sparkify wants to analyze the data they've been collecting on songs and user activity on their new music streaming app. The analytics team is particularly interested in understanding what songs users are listening to. Currently, they don't have an easy way to query their data, which resides in a directory of JSON logs on user activity on the app, as well as a directory with JSON metadata on the songs in their app.
+# CREATE TABLES
 
-They'd like a data engineer to create a Postgres database with tables designed to optimize queries on song play analysis, and bring you on the project. Your role is to create a database schema and ETL pipeline for this analysis. You'll be able to test your database and ETL pipeline by running queries given to you by the analytics team from Sparkify and compare your results with their expected results.
+user_table_create = ("CREATE table IF NOT EXISTS users (user_id int PRIMARY KEY, first_name varchar, last_name varchar, gender varchar, level varchar);")
 
-## Project Description
+song_table_create = ("CREATE table IF NOT EXISTS songs (song_id varchar PRIMARY KEY, title varchar, artist_id varchar, year int, duration int);")
 
-To complete the project, you will need to define fact and dimension tables for a star schema for a particular analytic focus, and write an ETL pipeline that transfers data from files in two local directories into these tables in Postgres using Python and SQL. 
+artist_table_create = ("CREATE table IF NOT EXISTS artists (artist_id varchar PRIMARY KEY, name varchar, location varchar, latitude numeric, longitude numeric);")
 
-## Discuss the purpose of this database in the context of the startup, Sparkify, and their analytical goals.
+time_table_create = ("CREATE table IF NOT EXISTS time (start_time date PRIMARY KEY, hour int, day int, week int, month int, year int, weekday int);")
 
-The purpose of this database is to facilitate Sparkify the understanding of their user's activity regarding to listening to music. As it is mentioned in the Introduction of this project, currently, Sparkify does not have a proper way to query this kind of data, as its data is spread in files.
-With this database, Sparkify is able to execute queries regarding the activities of their users related to what artist, songs they listen to, in a specific point of time.
 
-## State and justify your database schema design and ETL pipeline.
+songplay_table_create = ("CREATE table IF NOT EXISTS songplays (songplay_id int PRIMARY KEY, start_time bigint, \
+                                                                user_id int , \
+                                                                level varchar, song_id varchar, artist_id varchar, session_id int, \
+                                                                location varchar, user_agent varchar);")
 
-### Schema for Song Play Analysis
+alter_songplay_fk_user_id = "alter table songplays add foreign key (user_id) REFERENCES users(user_id);"
+alter_songplay_fk_song_id = "alter table songplays add foreign key (song_id) REFERENCES songs(song_id);"
+alter_songplay_fk_artist_id = "alter table songplays add foreign key (artist_id) REFERENCES artists(artist_id);"
 
-#### Fact Table
-> **songplays** - records in log data associated with song plays i.e. records with page NextSong
-        songplay_id, start_time, user_id, level, song_id, artist_id, session_id, location, user_agent
+# INSERT RECORDS
 
-#### Dimension Tables
+songplay_table_insert = "INSERT INTO songplays (songplay_id, start_time, user_id, level, song_id, artist_id, session_id, location, user_agent)\
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING"
 
-> **users** - users in the app
-        user_id, first_name, last_name, gender, level
+user_table_insert = ("INSERT INTO users (user_id, first_name, last_name, gender, level)\
+                        VALUES (%s, %s, %s, %s, %s) ON CONFLICT (user_id) DO UPDATE SET level = EXCLUDED.level;")
 
-> **songs** - songs in music database
-        song_id, title, artist_id, year, duration
+song_table_insert = ("INSERT INTO songs (song_id, title, artist_id, year, duration)\
+                          VALUES (%s, %s, %s, %s, %s) ON CONFLICT DO NOTHING")
 
-> **artists** - artists in music database
-        artist_id, name, location, latitude, longitude
+artist_table_insert = ("INSERT INTO artists (artist_id, name, location, latitude, longitude)\
+                          VALUES (%s, %s, %s, %s, %s) ON CONFLICT DO NOTHING")
 
-> **time** - timestamps of records in songplays broken down into specific units
-        start_time, hour, day, week, month, year, weekday
 
-* Having dimensions composed of: Users Songs, Artists, Time, and the fact table centralizes the activity of the user measured with timestamp. Sparkify is able to perform analitycs in order to answer several questions like:
-    * What artis is the most listened among its users?
-    * What its the day of the week an artist is being played the most?
-    * What songs are the most popular on satruday nights?
+time_table_insert = ("INSERT INTO time (start_time, hour, day, week, month, year, weekday)\
+                          VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING")
 
+# FIND SONGS
+
+song_select = ("SELECT songs.song_id, songs.artist_id FROM songs JOIN artists ON\
+                    songs.artist_id = artists.artist_id WHERE\
+                    songs.title = %s AND\
+                    artists.name = %s AND\
+                    songs.duration = %s")
+
+# QUERY LISTS
+
+create_table_queries = [songplay_table_create, user_table_create, song_table_create, artist_table_create, time_table_create]
+alter_table_queries = [alter_songplay_fk_artist_id, alter_songplay_fk_song_id, alter_songplay_fk_artist_id]
+drop_table_queries = [songplay_table_drop, user_table_drop, song_table_drop, artist_table_drop, time_table_drop]
